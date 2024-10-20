@@ -10,6 +10,11 @@ To get started with the frontend, make sure you have the following dependencies 
 - **Axios**: For API calls
 - **React Router**: For routing
 - **Google Maps JavaScript API**: For Places Autocomplete
+  ```bash
+  npm install firebase
+  npm install react-router-dom
+  npm install @react-google-maps/api
+  npm install axios
 
 ### Installation
 
