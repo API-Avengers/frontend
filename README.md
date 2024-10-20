@@ -16,7 +16,7 @@ To get started with the frontend, make sure you have the following dependencies 
 1. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/your-org-name/frontend.git
+   git clone https://github.com/API-Avengers/frontend.git
    cd frontend
 
 2. **Install dependencies:**:
