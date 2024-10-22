@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { LoadScript, Autocomplete } from '@react-google-maps/api';
+import { useNavigate } from 'react-router-dom'; // For navigation to the new page
 
 const libraries = ['places'];
 const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
+
 const CreateTrip = () => {
   const [destination, setDestination] = useState('');
   const [days, setDays] = useState(1);
@@ -13,6 +15,7 @@ const CreateTrip = () => {
   const [autocomplete, setAutocomplete] = useState(null);
   const [inputValue, setInputValue] = useState(''); // New state to manage input
   const [debouncedValue, setDebouncedValue] = useState(inputValue); // State for debouncing
+  const navigate = useNavigate(); // Hook for navigation
 
   // Debounce logic: only update debouncedValue after 500ms of no typing
   useEffect(() => {
@@ -53,7 +56,10 @@ const CreateTrip = () => {
       console.error(error);
     }
   };
-  
+
+  const handleViewItinerary = () => {
+    navigate('/view-itinerary', { state: { itinerary } }); // Pass the itinerary to the new page
+  };
 
   return (
     <div className="container mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
@@ -120,12 +126,14 @@ const CreateTrip = () => {
       </button>
 
       {itinerary && (
-        <div className="mt-6">
-          <h3 className="text-xl mb-2">Generated Itinerary:</h3>
-          {itinerary.map((item, index) => (
-            <p key={index}>Day {item.day}: {item.plan}</p>
-          ))}
-        </div>
+        <>
+          <button
+            className="bg-green-600 text-white px-6 py-2 rounded-lg mt-4"
+            onClick={handleViewItinerary}
+          >
+            View Itinerary
+          </button>
+        </>
       )}
     </div>
   );
