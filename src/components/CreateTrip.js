@@ -1,53 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { LoadScript, Autocomplete } from '@react-google-maps/api';
-import { useNavigate } from 'react-router-dom'; // For navigation to the new page
+import { useNavigate } from 'react-router-dom';
 
 const libraries = ['places'];
 const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
 const CreateTrip = () => {
+  const [from, setFrom] = useState('');  // Starting point state
   const [destination, setDestination] = useState('');
   const [days, setDays] = useState(1);
   const [budget, setBudget] = useState('cheap');
   const [tripType, setTripType] = useState('solo');
+  const [mode, setMode] = useState('car'); // Mode of travel state
   const [itinerary, setItinerary] = useState(null);
-  const [autocomplete, setAutocomplete] = useState(null);
-  const [inputValue, setInputValue] = useState(''); // New state to manage input
-  const [debouncedValue, setDebouncedValue] = useState(inputValue); // State for debouncing
-  const navigate = useNavigate(); // Hook for navigation
+  const [autocompleteFrom, setAutocompleteFrom] = useState(null);
+  const [autocompleteTo, setAutocompleteTo] = useState(null);
+  const [inputValueFrom, setInputValueFrom] = useState('');
+  const [inputValueTo, setInputValueTo] = useState('');
+  const navigate = useNavigate();
 
-  // Debounce logic: only update debouncedValue after 500ms of no typing
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(inputValue);
-    }, 500);
+  const handlePlaceSelectedFrom = () => {
+    if (autocompleteFrom) {
+      const place = autocompleteFrom.getPlace();
+      setFrom(place.formatted_address);
+    }
+  };
 
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [inputValue]);
-
-  // Handle place selected
-  const handlePlaceSelected = () => {
-    if (autocomplete !== null) {
-      const place = autocomplete.getPlace();
+  const handlePlaceSelectedTo = () => {
+    if (autocompleteTo) {
+      const place = autocompleteTo.getPlace();
       setDestination(place.formatted_address);
     }
   };
 
-  const handleLoad = (autocompleteInstance) => {
-    setAutocomplete(autocompleteInstance);
+  const handleLoadFrom = (autocompleteInstance) => {
+    setAutocompleteFrom(autocompleteInstance);
+  };
+
+  const handleLoadTo = (autocompleteInstance) => {
+    setAutocompleteTo(autocompleteInstance);
   };
 
   const handleSubmit = async () => {
     const tripData = {
-      destination, 
-      days, 
-      budget, 
+      from,
+      destination,
+      days,
+      budget,
       trip_type: tripType,
+      mode,
     };
-    console.log("Trip Data: ", tripData);  // Add this line to see the data being sent
   
     try {
       const response = await axios.post('http://localhost:8000/create-itinerary', tripData);
@@ -58,7 +61,7 @@ const CreateTrip = () => {
   };
 
   const handleViewItinerary = () => {
-    navigate('/view-itinerary', { state: { itinerary } }); // Pass the itinerary to the new page
+    navigate('/view-itinerary', { state: { itinerary, from, destination, mode } });
   };
 
   return (
@@ -67,18 +70,44 @@ const CreateTrip = () => {
 
       <LoadScript googleMapsApiKey={apiKey} libraries={libraries}>
         <div className="mb-4">
+          <label className="block mb-2">From (Starting Point)</label>
+          <Autocomplete onLoad={handleLoadFrom} onPlaceChanged={handlePlaceSelectedFrom}>
+            <input
+              type="text"
+              className="w-full p-2 border"
+              placeholder="Enter starting point"
+              value={inputValueFrom}
+              onChange={(e) => setInputValueFrom(e.target.value)}
+            />
+          </Autocomplete>
+        </div>
+
+        <div className="mb-4">
           <label className="block mb-2">Destination</label>
-          <Autocomplete onLoad={handleLoad} onPlaceChanged={handlePlaceSelected}>
+          <Autocomplete onLoad={handleLoadTo} onPlaceChanged={handlePlaceSelectedTo}>
             <input
               type="text"
               className="w-full p-2 border"
               placeholder="Search for a destination"
-              value={inputValue}
-              onChange={e => setInputValue(e.target.value)} // Update only input value
+              value={inputValueTo}
+              onChange={(e) => setInputValueTo(e.target.value)}
             />
           </Autocomplete>
         </div>
       </LoadScript>
+
+      <div className="mb-4">
+        <label className="block mb-2">Mode of Travel</label>
+        <select
+          className="w-full p-2 border"
+          value={mode}
+          onChange={(e) => setMode(e.target.value)}
+        >
+          <option value="car">Car</option>
+          <option value="bus">Bus</option>
+          <option value="flight">Flight</option>
+        </select>
+      </div>
 
       <div className="mb-4">
         <label className="block mb-2">Number of Days</label>
@@ -86,7 +115,7 @@ const CreateTrip = () => {
           type="number"
           className="w-full p-2 border"
           value={days}
-          onChange={e => setDays(e.target.value)}
+          onChange={(e) => setDays(e.target.value)}
           min="1"
         />
       </div>
@@ -96,7 +125,7 @@ const CreateTrip = () => {
         <select
           className="w-full p-2 border"
           value={budget}
-          onChange={e => setBudget(e.target.value)}
+          onChange={(e) => setBudget(e.target.value)}
         >
           <option value="cheap">Cheap</option>
           <option value="moderate">Moderate</option>
@@ -109,7 +138,7 @@ const CreateTrip = () => {
         <select
           className="w-full p-2 border"
           value={tripType}
-          onChange={e => setTripType(e.target.value)}
+          onChange={(e) => setTripType(e.target.value)}
         >
           <option value="solo">Solo</option>
           <option value="couple">Couple</option>
@@ -126,14 +155,12 @@ const CreateTrip = () => {
       </button>
 
       {itinerary && (
-        <>
-          <button
-            className="bg-green-600 text-white px-6 py-2 rounded-lg mt-4"
-            onClick={handleViewItinerary}
-          >
-            View Itinerary
-          </button>
-        </>
+        <button
+          className="bg-green-600 text-white px-6 py-2 rounded-lg mt-4"
+          onClick={handleViewItinerary}
+        >
+          View Itinerary
+        </button>
       )}
     </div>
   );
