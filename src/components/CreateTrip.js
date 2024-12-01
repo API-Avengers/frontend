@@ -1,24 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { LoadScript, Autocomplete } from '@react-google-maps/api';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import axios from "axios";
+import { LoadScript, Autocomplete } from "@react-google-maps/api";
+import { useNavigate } from "react-router-dom";
+import { getDatabase, ref, push } from "firebase/database"; // Firebase database
+import { getAuth } from "firebase/auth";
 
-const libraries = ['places'];
+const libraries = ["places"];
 const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
 const CreateTrip = () => {
-  const [from, setFrom] = useState('');  // Starting point state
-  const [destination, setDestination] = useState('');
-  const [days, setDays] = useState(1);
-  const [budget, setBudget] = useState('cheap');
-  const [tripType, setTripType] = useState('solo');
-  const [mode, setMode] = useState('car'); // Mode of travel state
+  const [from, setFrom] = useState("");
+  const [destination, setDestination] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [budget, setBudget] = useState("cheap");
+  const [tripType, setTripType] = useState("solo");
+  const [mode, setMode] = useState("car");
   const [itinerary, setItinerary] = useState(null);
   const [autocompleteFrom, setAutocompleteFrom] = useState(null);
   const [autocompleteTo, setAutocompleteTo] = useState(null);
-  const [inputValueFrom, setInputValueFrom] = useState('');
-  const [inputValueTo, setInputValueTo] = useState('');
   const navigate = useNavigate();
+  const auth = getAuth();
+  const db = getDatabase();
 
   const handlePlaceSelectedFrom = () => {
     if (autocompleteFrom) {
@@ -44,24 +47,47 @@ const CreateTrip = () => {
 
   const handleSubmit = async () => {
     const tripData = {
-      from,
+      from_: from, // Match the backend model
       destination,
-      days,
+      startDate,
+      endDate,
       budget,
       trip_type: tripType,
       mode,
     };
   
+    console.log("Payload:", tripData); // Debug payload
+  
     try {
-      const response = await axios.post('http://localhost:8000/create-itinerary', tripData);
+      const response = await axios.post("http://localhost:8000/create-itinerary", tripData);
       setItinerary(response.data.itinerary);
     } catch (error) {
-      console.error(error);
+      console.error("Error creating itinerary:", error.response?.data || error.message);
     }
+  };
+  
+  
+
+  const handleSaveItinerary = () => {
+    if (!auth.currentUser) return;
+
+    const userId = auth.currentUser.uid;
+    const savedItineraryRef = ref(db, `users/${userId}/itineraries`);
+    const tripTitle = destination;
+
+    push(savedItineraryRef, {
+      title: tripTitle,
+      itinerary,
+      startDate,
+      endDate,
+      mode,
+    });
   };
 
   const handleViewItinerary = () => {
-    navigate('/view-itinerary', { state: { itinerary, from, destination, mode } });
+    navigate("/view-itinerary", {
+      state: { itinerary, from, destination, mode, startDate, endDate },
+    });
   };
 
   return (
@@ -76,8 +102,8 @@ const CreateTrip = () => {
               type="text"
               className="w-full p-2 border"
               placeholder="Enter starting point"
-              value={inputValueFrom}
-              onChange={(e) => setInputValueFrom(e.target.value)}
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
             />
           </Autocomplete>
         </div>
@@ -89,12 +115,32 @@ const CreateTrip = () => {
               type="text"
               className="w-full p-2 border"
               placeholder="Search for a destination"
-              value={inputValueTo}
-              onChange={(e) => setInputValueTo(e.target.value)}
+              value={destination}
+              onChange={(e) => setDestination(e.target.value)}
             />
           </Autocomplete>
         </div>
       </LoadScript>
+
+      <div className="mb-4">
+        <label className="block mb-2">Start Date</label>
+        <input
+          type="date"
+          className="w-full p-2 border"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block mb-2">End Date</label>
+        <input
+          type="date"
+          className="w-full p-2 border"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+        />
+      </div>
 
       <div className="mb-4">
         <label className="block mb-2">Mode of Travel</label>
@@ -107,17 +153,6 @@ const CreateTrip = () => {
           <option value="bus">Bus</option>
           <option value="flight">Flight</option>
         </select>
-      </div>
-
-      <div className="mb-4">
-        <label className="block mb-2">Number of Days</label>
-        <input
-          type="number"
-          className="w-full p-2 border"
-          value={days}
-          onChange={(e) => setDays(e.target.value)}
-          min="1"
-        />
       </div>
 
       <div className="mb-4">
@@ -147,20 +182,25 @@ const CreateTrip = () => {
         </select>
       </div>
 
-      <button
-        className="bg-blue-600 text-white px-6 py-2 rounded-lg"
-        onClick={handleSubmit}
-      >
+      <button className="bg-blue-600 text-white px-6 py-2 rounded-lg" onClick={handleSubmit}>
         Create Itinerary
       </button>
 
       {itinerary && (
-        <button
-          className="bg-green-600 text-white px-6 py-2 rounded-lg mt-4"
-          onClick={handleViewItinerary}
-        >
-          View Itinerary
-        </button>
+        <>
+          <button
+            className="bg-green-600 text-white px-6 py-2 rounded-lg mt-4"
+            onClick={handleViewItinerary}
+          >
+            View Itinerary
+          </button>
+          <button
+            className="bg-yellow-600 text-white px-6 py-2 rounded-lg mt-4"
+            onClick={handleSaveItinerary}
+          >
+            Save Itinerary
+          </button>
+        </>
       )}
     </div>
   );
