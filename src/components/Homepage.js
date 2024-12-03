@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getAuth } from "firebase/auth";
-import { getDatabase, ref, onValue } from "firebase/database";
+import { getDatabase, ref, onValue, remove } from "firebase/database";
 import { useNavigate } from "react-router-dom";
 
 const Homepage = () => {
@@ -30,6 +30,17 @@ const Homepage = () => {
   const viewItinerary = (itinerary) => {
     navigate('/view-itinerary', { state: itinerary });
   };
+  const deleteItinerary = async (id) => {
+    try {
+      const userId = auth.currentUser.uid;
+      const itineraryRef = ref(db, `users/${userId}/itineraries/${id}`);
+      await remove(itineraryRef);
+      alert('Itinerary deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting itinerary:', error);
+      alert('Failed to delete itinerary.');
+    }
+  };
 
   return (
     <div className="p-6">
@@ -47,6 +58,12 @@ const Homepage = () => {
                 >
                   View Itinerary
                 </button>
+                <button
+                className="ml-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                onClick={() => deleteItinerary(itinerary.id)}
+              >
+                Delete
+              </button>
               </div>
             </li>
           ))}

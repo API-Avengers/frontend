@@ -23,6 +23,11 @@ const Navbar = () => {
                 <button onClick={logout} className="hover:text-gray-200">Logout</button>
               </li>
               <li>
+              <Link to="/" className="px-4 hover:underline">
+            Home
+          </Link>
+          </li>
+              <li>
                 <Link to="/create-trip" className="hover:text-gray-200">Create Trip</Link>
               </li>
             </>

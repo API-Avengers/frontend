@@ -194,12 +194,12 @@ const CreateTrip = () => {
           >
             View Itinerary
           </button>
-          <button
+          {/* <button
             className="bg-yellow-600 text-white px-6 py-2 rounded-lg mt-4"
             onClick={handleSaveItinerary}
           >
             Save Itinerary
-          </button>
+          </button> */}
         </>
       )}
     </div>
