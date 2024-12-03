@@ -59,7 +59,8 @@ const CreateTrip = () => {
     console.log("Payload:", tripData); // Debug payload
   
     try {
-      const response = await axios.post("http://localhost:8000/create-itinerary", tripData);
+      // const response = await axios.post("http://localhost:8000/create-itinerary", tripData);
+      const response = await axios.post("https://apiavengers-backend.onrender.com/create-itinerary", tripData);
       setItinerary(response.data.itinerary);
     } catch (error) {
       console.error("Error creating itinerary:", error.response?.data || error.message);
